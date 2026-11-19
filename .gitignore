@@ -1,0 +1,10 @@
+node_modules/
+client/dist/
+.env
+*.log
+*.tmp
+# private runtime data (visitor enquiries) and uploaded files
+server/data/leads.json
+server/uploads/*
+!server/uploads/.gitkeep
+server/data/content.json
