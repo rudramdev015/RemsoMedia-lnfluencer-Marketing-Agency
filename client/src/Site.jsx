@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, animate, motion, useInView, useMotionValue, useScroll, useSpring, useTransform, useVelocity } from 'framer-motion';
 const HeroScene = lazy(() => import('./Three.jsx').then((m) => ({ default: m.HeroScene })));
 const NetworkSphere = lazy(() => import('./Three.jsx').then((m) => ({ default: m.NetworkSphere })));
+const ViewsScene = lazy(() => import('./Three.jsx').then((m) => ({ default: m.ViewsScene })));
 const ConnectScene = lazy(() => import('./Three.jsx').then((m) => ({ default: m.ConnectScene })));
 const IndiaMap = lazy(() => import('./IndiaMap.jsx'));
 import Avatar from './Avatar.jsx';
@@ -784,6 +785,44 @@ function WhatIs({ c }) {
   );
 }
 
+/* ───────── 7 billion views (3D) ───────── */
+function Billion({ c }) {
+  const d = c.billion;
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
+  const y = useTransform(scrollYProgress, [0, 1], [60, -60]);
+  const [small] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches);
+  if (!d) return null;
+  return (
+    <section id="views" className="sec billion" ref={ref}>
+      <div className="aurora a1" /><div className="aurora a2" />
+      <div className="bn-stage" aria-hidden>
+        <NearView className="bn-3d" margin="200px"><ViewsScene /></NearView>
+      </div>
+      <div className="wrap bn-in">
+        <div className="bn-copy">
+          <Reveal><span className="eyebrow">{d.eyebrow}</span></Reveal>
+          <motion.div className="bn-num" style={small ? undefined : { y }}>
+            <b><Counter value={d.value} suffix={d.suffix} /></b>
+            <span>{d.unit}</span>
+          </motion.div>
+          <SplitText text={d.title} className="bn-title" />
+          <Reveal i={2}><p>{d.line}</p></Reveal>
+          <Reveal i={3} className="bn-plat">{d.platforms.map((p) => <span key={p}>{p}</span>)}</Reveal>
+        </div>
+      </div>
+      <div className="wrap">
+        <div className="bn-hi">
+          {d.highlights.map((h, i) => (
+            <Reveal key={i} i={i}><Tilt className="bn-card" max={10}><b>{h.v}</b><span>{h.l}</span></Tilt></Reveal>
+          ))}
+        </div>
+        <p className="bn-note">{d.disclaimer}</p>
+      </div>
+    </section>
+  );
+}
+
 /* ───────── campaign simulator ───────── */
 function Simulator({ c }) {
   const d = c.simulator;
@@ -998,6 +1037,7 @@ function Profile({ c }) {
           <Reveal className="why-chips">{d.why.map((w, i) => <span key={w}><b>0{i + 1}</b>{w}</span>)}</Reveal>
           <Reveal i={2} className="profile-cta">
             <Magnetic><a className="btn btn-gold" href={d.file} download target="_blank" rel="noreferrer">⬇ {d.button}</a></Magnetic>
+            {d.fileOld && <a className="btn btn-dark" href={d.fileOld} download target="_blank" rel="noreferrer">⬇ {d.buttonOld}</a>}
             <a className="btn btn-dark" href={waLink(c.contact)} target="_blank" rel="noreferrer">💬 Ask on WhatsApp</a>
           </Reveal>
           <small className="disclaimer">{d.disclaimer}</small>
@@ -1142,6 +1182,7 @@ export default function Site() {
         <Hero c={c} />
         <Marquee c={c} />
         <Stats c={c} />
+        <Billion c={c} />
         <WhatIs c={c} />
         <Simulator c={c} />
         <Connect c={c} />

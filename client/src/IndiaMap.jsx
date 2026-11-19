@@ -6,11 +6,11 @@ import Avatar from './Avatar.jsx';
 const REGIONS = {
   South: { color: '#f3c545', states: ['Andhra Pradesh', 'Telangana', 'Karnataka', 'Kerala', 'Tamil Nadu', 'Puducherry', 'Lakshadweep'] },
   North: { color: '#37b89d', states: ['Jammu and Kashmir', 'Ladakh', 'Himachal Pradesh', 'Punjab', 'Haryana', 'Delhi', 'Uttarakhand', 'Uttar Pradesh', 'Rajasthan', 'Chandigarh'] },
-  East: { color: '#ff8a65', states: ['West Bengal', 'Odisha', 'Bihar', 'Jharkhand'] },
+  East: { color: '#ff8a65', states: ['West Bengal', 'Odisha', 'Bihar', 'Jharkhand', 'Chhattisgarh'] },
   'North East': { color: '#e0527a', states: ['Assam', 'Arunachal Pradesh', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Tripura', 'Sikkim'] },
-  'West & Central': { color: '#7aa7ff', states: ['Maharashtra', 'Gujarat', 'Goa', 'Madhya Pradesh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu'] }
+  West: { color: '#7aa7ff', states: ['Maharashtra', 'Gujarat', 'Goa', 'Madhya Pradesh', 'Dadra and Nagar Haveli and Daman and Diu'] }
 };
-const regionOf = (state) => Object.keys(REGIONS).find((r) => REGIONS[r].states.includes(state)) || 'West & Central';
+const regionOf = (state) => Object.keys(REGIONS).find((r) => REGIONS[r].states.includes(state)) || 'West';
 const HUB = 'Nagpur';
 const ARC_CITIES = ['Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Chennai', 'Hyderabad', 'Jaipur', 'Ahmedabad', 'Lucknow', 'Guwahati', 'Patna', 'Kochi', 'Chandigarh', 'Pune', 'Bhubaneswar', 'Kota', 'Indore', 'Surat', 'Bhopal'];
 
@@ -21,7 +21,7 @@ export default function IndiaMap({ c }) {
   const hub = map.cities[HUB];
   const pins = useMemo(() => (c.topCreators?.items || []).filter((x) => x.city && map.cities[x.city]).map((x) => ({ ...x, pos: map.cities[x.city] })), [c.topCreators]);
   const noteByRegion = Object.fromEntries((d.regions || []).map((r) => [r.name, r.note]));
-  noteByRegion['West & Central'] = 'Maharashtra, Gujarat, Goa, Madhya Pradesh, Chhattisgarh';
+  noteByRegion.West = 'Maharashtra, Gujarat, Goa, Madhya Pradesh';
   const shown = hover ? regionOf(hover) : active;
 
   return (

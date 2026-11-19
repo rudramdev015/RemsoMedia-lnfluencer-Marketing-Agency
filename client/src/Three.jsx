@@ -262,3 +262,61 @@ export function ConnectScene() {
   });
   return <div className="three-connect" ref={host} aria-hidden />;
 }
+
+
+/* ───────── Views skyline: a living 3D bar city that surges like a view counter ───────── */
+export function ViewsScene() {
+  const host = useScene(({ THREE, scene, camera, small }) => {
+    camera.position.set(0, 8.5, 15);
+    camera.lookAt(0, 1.2, 0);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const key = new THREE.DirectionalLight(0xffffff, 1.7); key.position.set(6, 12, 8); scene.add(key);
+    const glow = new THREE.PointLight(GOLD, 160, 40); glow.position.set(0, 6, 0); scene.add(glow);
+    const rim = new THREE.PointLight(TEAL, 140, 40); rim.position.set(-9, 3, -6); scene.add(rim);
+
+    const N = small ? 9 : 15, gap = 1.12, half = ((N - 1) * gap) / 2;
+    const geo = new THREE.BoxGeometry(0.82, 1, 0.82); geo.translate(0, 0.5, 0);
+    const mesh = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ metalness: 0.45, roughness: 0.3 }), N * N);
+    mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(N * N * 3), 3);
+    const grp = new THREE.Group(); grp.add(mesh); scene.add(grp);
+    const dummy = new THREE.Object3D(), col = new THREE.Color(), low = new THREE.Color(0x0b5545), mid = new THREE.Color(TEAL), hi = new THREE.Color(GOLD);
+
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(half * 1.9, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x063f34, transparent: true, opacity: 0.55 }));
+    floor.position.y = -0.02; grp.add(floor);
+    const rings = [0, 1, 2].map((i) => {
+      const r = new THREE.Mesh(new THREE.TorusGeometry(half * (1.25 + i * 0.28), 0.03, 10, 140).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: i % 2 ? TEAL : GOLD, transparent: true, opacity: 0.55 - i * 0.12 }));
+      r.position.y = 0.05; grp.add(r); return r;
+    });
+    const P = small ? 140 : 360, pp = new Float32Array(P * 3), sp = new Float32Array(P);
+    for (let i = 0; i < P; i++) { pp[i * 3] = (Math.random() - 0.5) * half * 2.4; pp[i * 3 + 1] = Math.random() * 9; pp[i * 3 + 2] = (Math.random() - 0.5) * half * 2.4; sp[i] = 0.5 + Math.random(); }
+    const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pp, 3));
+    const pts = new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xffe9a8, size: 0.09, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
+    grp.add(pts);
+
+    const fit = (w) => { camera.position.set(0, w < 700 ? 11 : 9.5, w < 700 ? 20 : 19); camera.lookAt(0, 1.2, 0); };
+    return {
+      resize: fit,
+      frame: (t, m) => {
+        const rise = Math.min(1, t / 2.2);
+        let i = 0;
+        for (let x = 0; x < N; x++) for (let z = 0; z < N; z++, i++) {
+          const px = x * gap - half, pz = z * gap - half, d = Math.hypot(px, pz), fall = Math.max(0, 1 - d / (half * 1.45));
+          const h = (0.25 + (Math.sin(d * 0.95 - t * 2.1) + 1) * 1.9 * fall + fall * 1.3) * rise;
+          dummy.position.set(px, 0, pz); dummy.scale.set(1, Math.max(h, 0.05), 1); dummy.updateMatrix();
+          mesh.setMatrixAt(i, dummy.matrix);
+          const k = Math.min(1, h / 4.6);
+          col.copy(low).lerp(mid, Math.min(1, k * 2)).lerp(hi, Math.max(0, k * 2 - 1));
+          mesh.setColorAt(i, col);
+        }
+        mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
+        grp.rotation.y = t * 0.16 + m.sx * 0.5; grp.rotation.x = m.sy * 0.06;
+        rings.forEach((r, n) => { r.rotation.z = t * (0.1 + n * 0.05); r.position.y = 0.05 + Math.sin(t * 1.4 + n) * 0.08; });
+        const a = pg.attributes.position.array;
+        for (let n = 0; n < P; n++) { a[n * 3 + 1] += sp[n] * 0.025; if (a[n * 3 + 1] > 9) a[n * 3 + 1] = 0; }
+        pg.attributes.position.needsUpdate = true;
+        glow.intensity = 150 + Math.sin(t * 2) * 25;
+      }
+    };
+  });
+  return <div className="three-views" ref={host} aria-hidden />;
+}

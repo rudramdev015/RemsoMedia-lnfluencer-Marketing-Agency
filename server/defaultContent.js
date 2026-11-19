@@ -34,7 +34,7 @@ export default {
     { value: 10000, suffix: '+', label: 'Influencers & creators' },
     { value: 70, suffix: '+', label: 'Brands served across India' },
     { value: 4, suffix: '+', label: 'Years of experience' },
-    { value: 20, suffix: 'M+', label: 'Views delivered for one brand' }
+    { value: 7, suffix: 'B+', label: 'Views across all platforms' }
   ],
   brandsStrip: ['Allen', 'Mamaearth', 'Plix', 'Nat Habit', 'Beco', 'Muchstac', 'Prince', 'Park Avenue', 'Flipkart', 'Amazon', 'Zepto', 'Blinkit', 'Rapido'],
   connect: {
@@ -64,7 +64,8 @@ export default {
     regions: [
       { name: 'South', note: 'Karnataka, Tamil Nadu, Kerala, Telangana, Andhra Pradesh' },
       { name: 'North', note: 'Delhi NCR, Punjab, Haryana, Rajasthan, UP, Uttarakhand, J&K' },
-      { name: 'East', note: 'West Bengal, Odisha, Bihar, Jharkhand' },
+      { name: 'East', note: 'West Bengal, Odisha, Bihar, Jharkhand, Chhattisgarh' },
+      { name: 'West', note: 'Maharashtra, Gujarat, Goa, Madhya Pradesh' },
       { name: 'North East', note: 'Assam and the seven sister states' }
     ],
     tiers: [
@@ -158,6 +159,8 @@ export default {
     title: 'We don’t just find influencers. We build brand impact.',
     text: 'Download our 15-page portfolio — who we are, our numbers, services, case studies and how we work. Share it with your team in one tap.',
     file: '/Remso_Media_Portfolio.pdf',
+    fileOld: '/Remso_Media_Portfolio_earlier.pdf',
+    buttonOld: 'Earlier version (PDF)',
     button: 'Download portfolio (PDF)',
     pages: '15 pages · PDF',
     why: ['Pan-India creator access', 'Category-specific influencer matching', 'Regional and multilingual campaigns', 'Nano-to-celebrity influencer network', 'End-to-end campaign coordination', 'Performance reporting', 'Flexible campaign strategies'],
@@ -220,6 +223,22 @@ export default {
       { name: 'Neha Patil', role: 'Content & Strategy', bio: 'Shapes briefs, scripts and creative direction.', image: '', skin: '#e0ab83', hair: '#2a1a14', top: '#d9a21b', style: 'bun', extras: 'glasses' }
     ]
   },
+  billion: {
+    eyebrow: 'Our reach',
+    value: 7,
+    suffix: 'B+',
+    unit: 'BILLION VIEWS',
+    title: 'Seven billion views. Every one started with a creator.',
+    line: 'Across Instagram, YouTube, Facebook and every platform our creators call home, Indian audiences have watched, shared and bought — because someone they trust said so.',
+    platforms: ['Instagram', 'YouTube', 'Facebook', 'Shorts & Reels', 'Regional apps', 'All platforms'],
+    highlights: [
+      { v: '23M+', l: 'views on a single Nat Habit creator reel' },
+      { v: '30M+', l: 'views & conversions for Nat Habit' },
+      { v: '20M+', l: 'views on one Allen campaign' },
+      { v: '~20M', l: 'monthly views for Ghar Soaps' }
+    ],
+    disclaimer: 'Agency-reported figure, cumulative across all campaigns and platforms; not independently verified.'
+  },
   what: {
     eyebrow: 'Influencer marketing, explained',
     title: 'People trust people. Influencer marketing puts your brand in their voice.',
@@ -271,7 +290,7 @@ export default {
       { brand: 'Nat Habit', type: 'conversion', industry: 'Beauty & personal care', goal: 'Views & conversions', period: '~6 months, continuous', metric: 30, suffix: 'M+', metricLabel: 'views. Consistent brand momentum.',
         challenge: 'Keep the brand visible and drive purchases, month after month.',
         approach: 'Over approximately six months, continuous creator collaborations in beauty and personal care. Steady, repeat visibility built familiarity — and conversions were reported alongside the views.',
-        results: [{ v: '30M+', l: 'Views + conversions' }, { v: '~6 months', l: 'Continuous' }], tags: ['Always-on', 'Beauty', 'Conversion'], note: 'Conversions reported but not quantified.' },
+        results: [{ v: '30M+', l: 'Views + conversions' }, { v: '23M+', l: 'Top single creator reel' }, { v: '~6 months', l: 'Continuous' }], tags: ['Always-on', 'Beauty', 'Conversion'], note: 'Conversions reported but not quantified.' },
       { brand: 'Ghar Soaps', type: 'always-on', industry: 'Personal care', goal: 'Consistent monthly reach', period: '1 year, continuous', metric: 20, suffix: 'M', metricLabel: 'monthly views, as reported',
         challenge: 'Stay visible every month, not just during a launch.',
         approach: 'An always-on programme activating 200+ influencers every month for a full year, with relatable, regional creator content.',

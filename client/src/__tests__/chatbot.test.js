@@ -24,7 +24,7 @@ describe('chatbot matching', () => {
     ['i want influencer in kerala', 'state:Kerala'], ['can you promote my brand on instagram', 'plat:instagram'],
     ['have you worked with mamaearth', 'brand:Mamaearth'], ['tell me about ghar soaps', 'r_soaps'], ['who is ramesh', 'founder'],
     ['send your portfolio pdf', 'profile'], ['can i get a reference', 'references'], ['how long to launch', 'timeline'],
-    ['minimum budget', 'min_budget'], ['get a quote', 'quote'], ['are you a robot', 'bot'], ['bye', 'bye']
+    ['minimum budget', 'min_budget'], ['how many views have you delivered in total', 'views_total'], ['get a quote', 'quote'], ['are you a robot', 'bot'], ['bye', 'bye']
   ];
   it.each(cases)('"%s" -> %s', (q, expected) => { expect(id(q)).toBe(expected); });
   it('falls back for off-topic questions', () => { expect(id('what is the capital of france')).toBeNull(); });

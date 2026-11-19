@@ -215,3 +215,63 @@
 @media (prefers-reduced-motion: reduce) { .wh-spin, .wh-node-in, .wh-ring, .wh-core, .wh-float { animation: none !important; } }
 
 @media (max-width: 620px) { .wh-pills { display: none; } }
+
+/* v9: 7 billion section, mobile polish */
+.billion { position: relative; overflow: hidden; background: radial-gradient(100% 80% at 50% 0%, var(--g700), var(--g900) 62%); color: #fff; padding-bottom: clamp(50px, 7vw, 90px); }
+.billion .eyebrow { color: var(--gold2); }
+.bn-stage { position: absolute; inset: 0; pointer-events: none; }
+.bn-3d { position: absolute; right: 0; top: 0; width: 62%; height: 100%; }
+.bn-stage::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, var(--g900) 0%, rgba(2,31,26,.85) 30%, transparent 58%); }
+.three-views { position: absolute; inset: 0; }
+.bn-in { position: relative; z-index: 2; min-height: clamp(420px, 55vw, 620px); display: flex; align-items: center; }
+.bn-copy { max-width: 600px; }
+.bn-num { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 18px; margin: 6px 0 14px; }
+.bn-num b { font-family: var(--head); font-weight: 800; font-size: clamp(5rem, 15vw, 11rem); line-height: .9; letter-spacing: -.05em; background: linear-gradient(120deg, #fff 10%, var(--gold2) 60%, var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 12px 40px rgba(243,197,69,.3)); font-variant-numeric: tabular-nums; }
+.bn-num > span { font-family: var(--head); font-weight: 800; letter-spacing: .22em; color: var(--gold2); font-size: clamp(.8rem, 1.6vw, 1.1rem); }
+.bn-title { font-size: clamp(1.6rem, 3.4vw, 2.7rem); font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+.bn-copy p { margin: 18px 0 22px; color: rgba(255,255,255,.8); font-size: 1.08rem; }
+.bn-plat { display: flex; flex-wrap: wrap; gap: 8px; }
+.bn-plat span { padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.18); font-weight: 600; font-size: .85rem; backdrop-filter: blur(8px); }
+.bn-hi { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 26px; }
+.bn-card { height: 100%; padding: 24px; border-radius: 24px; background: linear-gradient(160deg, rgba(255,255,255,.13), rgba(255,255,255,.04)); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(10px); }
+.bn-card b { display: block; font-family: var(--head); font-size: clamp(2rem, 3.4vw, 2.8rem); line-height: 1; color: var(--gold2); transform: translateZ(30px); margin-bottom: 8px; }
+.bn-card span { color: rgba(255,255,255,.82); font-size: .92rem; }
+.bn-note { position: relative; z-index: 2; margin-top: 18px; font-size: .76rem; color: rgba(255,255,255,.55); }
+@media (max-width: 980px) {
+  .bn-stage { position: relative; height: 300px; inset: auto; margin-bottom: -40px; }
+  .bn-stage::after { background: linear-gradient(0deg, var(--g800), transparent 40%); }
+  .bn-3d { position: absolute; inset: 0; width: 100%; height: 100%; right: 0; top: 0; }
+  .bn-in { min-height: 0; }
+  .bn-hi { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 620px) {
+  .billion { padding-top: 70px; }
+  .bn-stage { height: 250px; }
+  .bn-num b { font-size: clamp(4.4rem, 24vw, 7rem); }
+  .bn-hi { gap: 10px; } .bn-card { padding: 16px; border-radius: 18px; } .bn-card span { font-size: .8rem; }
+}
+
+/* phone polish */
+@media (max-width: 700px) {
+  .hero { min-height: 0; align-items: flex-start; padding: 104px 0 64px; }
+  .hero h1 { font-size: clamp(1.9rem, 8.4vw, 2.5rem); }
+  .hero-art { min-height: 0; margin-top: 4px; }
+  .scroll-hint { display: none; }
+  .hero-face { width: 100%; }
+  .marquees { margin-top: -14px; }
+  .stats { padding: 56px 0; } .stats-copy h2 { font-size: 1.7rem; }
+  .three-net { opacity: .22; }
+  .section-head h2, .india-copy h2, .contact h2 { font-size: clamp(1.7rem, 7.4vw, 2.2rem); }
+  .tiers { grid-template-columns: 1fr; gap: 20px; } .tier-bars { min-height: 180px; }
+  .steps { padding-left: 0; } .step { padding: 18px 0; gap: 16px; } .num { width: 48px; height: 48px; }
+  .about { gap: 36px; } .ticks { grid-template-columns: 1fr; }
+  .faq button { padding: 18px; font-size: 1rem; } .ans p { padding: 0 18px 20px; }
+  .form { padding: 22px 18px; } .two { grid-template-columns: 1fr; gap: 0; }
+  .foot-word { font-size: 17vw; } .foot-cta { padding: 54px 0; }
+  .case article, .cs-hero { padding-inline: 20px; }
+  .cs-body .btn, .hero-cta .btn { width: 100%; }
+  .map-tip { position: static; margin-top: 10px; display: inline-grid; }
+  .india-map { max-width: 100%; }
+  .wa-float { bottom: 14px; } .chat-fab { bottom: 78px; }
+}
+@media (max-width: 400px) { .wrap, .narrow { width: calc(100% - 28px); } .btn { padding: 13px 18px; font-size: .92rem; } .logo span { font-size: 1.05rem; } }
