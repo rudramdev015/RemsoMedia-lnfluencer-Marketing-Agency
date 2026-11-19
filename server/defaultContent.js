@@ -243,6 +243,21 @@ export default {
       { label: 'Reusability', ads: 'One-time creative', inf: 'Reuse content on ads & pages' }
     ]
   },
+  simulator: {
+    eyebrow: 'Campaign simulator',
+    title: 'Build your creator mix. Watch the reach move.',
+    text: 'Drag the sliders to choose how many creators you would use in each tier and see an illustrative estimate of views, clicks and orders.',
+    disclaimer: 'Illustrative planning model using example averages — not a promise or a quote. Real results depend on category, creative, offer and timing. We plan every campaign with real data.',
+    ctr: 1.5,
+    cvr: 2,
+    tiers: [
+      { name: 'Nano', size: '1K–10K', avgViews: 4000, max: 300, start: 80 },
+      { name: 'Micro', size: '10K–100K', avgViews: 40000, max: 150, start: 40 },
+      { name: 'Macro', size: '100K–1M', avgViews: 250000, max: 40, start: 6 },
+      { name: 'Mega', size: '1M+', avgViews: 1200000, max: 10, start: 0 },
+      { name: 'Celebrity', size: 'Star power', avgViews: 4000000, max: 3, start: 0 }
+    ]
+  },
   caseStudies: {
     eyebrow: 'Case studies',
     title: 'Different brands. Different goals. One commitment to results.',

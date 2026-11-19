@@ -58,7 +58,7 @@
 .wall:hover .wall-track { animation-play-state: paused; }
 .logo-tile { flex: none; width: 230px; height: 112px; display: grid; place-items: center; padding: 14px 20px; border-radius: 22px; background: #fff; border: 1px solid rgba(0,0,0,.06); box-shadow: 0 14px 34px -24px rgba(4,55,47,.55); transition: transform .35s var(--ease), box-shadow .35s; text-align: center; }
 .logo-tile:hover { transform: translateY(-8px) scale(1.04); box-shadow: 0 26px 50px -24px rgba(217,162,27,.7); }
-.logo-tile img { max-height: 70px; max-width: 100%; object-fit: contain; }
+.logo-tile img { max-height: 64px; max-width: 100%; object-fit: contain; filter: grayscale(1); opacity: .8; transition: .3s; } .logo-tile:hover img { filter: none; opacity: 1; }
 .logo-tile span { font-size: 1.5rem; line-height: 1.1; }
 .wm-a span { font-family: var(--head); font-weight: 800; color: #0b5545; letter-spacing: -.03em; }
 .wm-b span { font-family: 'Playfair Display', serif; font-weight: 700; font-style: italic; color: #8a5f08; }
@@ -81,7 +81,7 @@
 .face-tag span { font-size: .75rem; font-weight: 600; opacity: .8; }
 .foot-brands { overflow: hidden; padding: 20px 0; background: rgba(0,0,0,.18); border-bottom: 1px solid rgba(255,255,255,.06); }
 .foot-brands .marquee-track { animation-duration: 60s; }
-.foot-brands span { font-family: var(--head); font-weight: 700; font-size: 1.1rem; padding: 0 22px; white-space: nowrap; display: flex; align-items: center; gap: 44px; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .06em; }
+.foot-brands span { font-family: var(--head); font-weight: 700; font-size: 1.1rem; padding: 0 22px; white-space: nowrap; display: flex; align-items: center; gap: 44px; color: rgba(255,255,255,.78); text-transform: uppercase; letter-spacing: .06em; }
 .foot-brands i { font-style: normal; color: var(--gold); }
 .foot-grid { display: grid; grid-template-columns: 1.4fr 1fr 1.1fr 1.3fr; gap: 40px; padding: 70px 0 40px; }
 .fcol { display: grid; gap: 10px; align-content: start; }

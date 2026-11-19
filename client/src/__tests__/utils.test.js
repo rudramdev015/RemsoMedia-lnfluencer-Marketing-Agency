@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sortCases, filterCreators } from '../utils.js';
+import { sortCases, filterCreators, simulate, compact } from '../utils.js';
 
 const cases = [{ brand: 'Beco', metric: 0 }, { brand: 'Allen', metric: 20 }, { brand: 'Prince', metric: 350 }];
 describe('sortCases', () => {
@@ -19,4 +19,15 @@ describe('filterCreators', () => {
     expect(filterCreators(creators, '', 'az')[0].name).toBe('Akhil');
     expect(filterCreators(creators, '', 'za')[0].name).toBe('Mahi Patel');
   });
+});
+
+describe('simulate', () => {
+  const tiers = [{ avgViews: 1000 }, { avgViews: 50000 }];
+  it('adds up views across tiers', () => expect(simulate([10, 2], tiers).views).toBe(110000));
+  it('derives clicks and orders from the rates', () => { const r = simulate([0, 2], tiers, 2, 5); expect(r.views).toBe(100000); expect(r.clicks).toBe(2000); expect(r.orders).toBe(100); });
+  it('treats bad input as zero', () => expect(simulate([-5, 'x'], tiers).views).toBe(0));
+  it('counts creators', () => expect(simulate([3, 4], tiers).creators).toBe(7));
+});
+describe('compact', () => {
+  it('formats Indian-style numbers', () => { expect(compact(950)).toBe('950'); expect(compact(12500)).toBe('12.5K'); expect(compact(2500000)).toBe('25.0 L'); expect(compact(30000000)).toBe('3.0 Cr'); });
 });

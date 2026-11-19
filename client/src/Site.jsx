@@ -6,7 +6,7 @@ const ConnectScene = lazy(() => import('./Three.jsx').then((m) => ({ default: m.
 const IndiaMap = lazy(() => import('./IndiaMap.jsx'));
 import Avatar from './Avatar.jsx';
 import PhoneMock from './PhoneMock.jsx';
-import { sortCases, filterCreators } from './utils.js';
+import { sortCases, filterCreators, simulate, compact } from './utils.js';
 const ChatBot = lazy(() => import('./chatbot/ChatBot.jsx'));
 
 /* ───────── helpers ───────── */
@@ -21,6 +21,18 @@ const Reveal = ({ children, i = 0, className = '', as = 'div' }) => {
       {children}
     </M>
   );
+};
+
+/* mount a heavy child only after the page has loaded and the browser is idle */
+const AfterIdle = ({ children, delay = 600 }) => {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    let t;
+    const go = () => { t = setTimeout(() => ('requestIdleCallback' in window ? window.requestIdleCallback(() => setOn(true), { timeout: 2500 }) : setOn(true)), delay); };
+    if (document.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
+    return () => { clearTimeout(t); window.removeEventListener('load', go); };
+  }, [delay]);
+  return on ? children : null;
 };
 
 /* mount a heavy child only when it is close to the viewport */
@@ -202,6 +214,7 @@ function Chip({ ch, i, sx, sy }) {
 /* ───────── hero ───────── */
 function Hero({ c }) {
   const h = c.hero;
+  const [small] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches);
   const [w, setW] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setW((x) => (x + 1) % h.rotating.length), 2400);
@@ -248,7 +261,9 @@ function Hero({ c }) {
         </div>
 
         <div className="hero-art">
-          <Suspense fallback={null}><HeroScene logo={c.brand.logo} /></Suspense>
+          {small
+            ? <motion.img className="hero-logo-m" src={c.brand.logo} alt="" width="200" height="200" animate={{ y: [0, -12, 0], rotateY: [0, 18, 0, -18, 0] }} transition={{ repeat: Infinity, duration: 7, ease: 'easeInOut' }} />
+            : <AfterIdle><Suspense fallback={null}><HeroScene logo={c.brand.logo} /></Suspense></AfterIdle>}
           {chips.map((ch, i) => ch.t && <Chip key={i} ch={ch} i={i} sx={sx} sy={sy} />)}
         </div>
       </div>
@@ -634,15 +649,15 @@ function Footer({ c }) {
           </div>
         </div>
         <div className="fcol">
-          <h4>Explore</h4>
+          <h3 className="fh">Explore</h3>
           {explore.map(([id, l]) => <a key={id} href={'#' + id} onClick={go(id)}>{l}</a>)}
         </div>
         <div className="fcol">
-          <h4>What we do</h4>
+          <h3 className="fh">What we do</h3>
           {c.services.items.map((s) => <a key={s.title} href="#services" onClick={go('services')}>{s.title}</a>)}
         </div>
         <div className="fcol">
-          <h4>Contact</h4>
+          <h3 className="fh">Contact</h3>
           <a href={tel}>📞 {k.phone}</a>
           <a href={waLink(k)} target="_blank" rel="noreferrer">💬 WhatsApp chat</a>
           <a href={'mailto:' + k.email}>✉️ {k.email}</a>
@@ -719,7 +734,7 @@ function WhatIs({ c }) {
               <div className="flow-step" key={i}>
                 <motion.span className="flow-dot" initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.2 + i * 0.25, type: 'spring' }}>{['🏷️', '🎤', '👥', '📈'][i % 4]}</motion.span>
                 <b>{f}</b>
-                {i < d.flow.length - 1 && <motion.i initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }} transition={{ delay: 0.4 + i * 0.25, duration: 0.5 }} />}
+                {i < d.flow.length - 1 && <motion.i className="flow-line" initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }} transition={{ delay: 0.4 + i * 0.25, duration: 0.5 }} />}
               </div>
             ))}
           </Reveal>
@@ -741,6 +756,53 @@ function WhatIs({ c }) {
             <div className="cmp-row" key={i}><span>{r.label}</span><p>{r.ads}</p><p className="win">{r.inf}</p></div>
           ))}
         </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ───────── campaign simulator ───────── */
+function Simulator({ c }) {
+  const d = c.simulator;
+  const [counts, setCounts] = useState(() => (d ? d.tiers.map((t) => t.start || 0) : []));
+  const [views, setViews] = useState(0);
+  const res = d ? simulate(counts, d.tiers, d.ctr, d.cvr) : { views: 0, clicks: 0, orders: 0, creators: 0 };
+  useEffect(() => {
+    const ctl = animate(views, res.views, { duration: 0.8, ease: 'easeOut', onUpdate: (v) => setViews(Math.round(v)) });
+    return () => ctl.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [res.views]);
+  if (!d) return null;
+  const peak = Math.max(res.views, 1);
+  const bars = [['Views', res.views, 100], ['Clicks', res.clicks, (res.clicks / peak) * 100], ['Orders', res.orders, (res.orders / peak) * 100]];
+  const msg = encodeURIComponent(`Hi Remso Media! I tried your simulator with ${res.creators} creators (${d.tiers.map((t, i) => (counts[i] ? counts[i] + ' ' + t.name : null)).filter(Boolean).join(', ') || 'no mix yet'}). Can you plan a real campaign for my brand?`);
+  return (
+    <section id="simulator" className="sec sim">
+      <div className="aurora a2" />
+      <div className="wrap">
+        <SectionHead eyebrow={d.eyebrow} title={d.title} text={d.text} />
+        <div className="sim-grid">
+          <Reveal className="sim-controls">
+            {d.tiers.map((t, i) => (
+              <label key={t.name} className="sim-row">
+                <span className="sim-top"><b>{t.name}</b><small>{t.size}</small><em>{counts[i]}</em></span>
+                <input type="range" min="0" max={t.max} value={counts[i]} aria-label={`${t.name} creators`} style={{ '--p': (counts[i] / t.max) * 100 + '%' }}
+                  onChange={(e) => setCounts(counts.map((x, n) => (n === i ? Number(e.target.value) : x)))} />
+              </label>
+            ))}
+            <button className="sim-reset" onClick={() => setCounts(d.tiers.map(() => 0))}>Reset</button>
+          </Reveal>
+          <Reveal i={1} className="sim-out">
+            <div className="sim-big"><small>Estimated views</small><b>{compact(views)}</b><span>from {res.creators} creator{res.creators === 1 ? '' : 's'}</span></div>
+            <div className="sim-bars">
+              {bars.map(([l, v, w]) => (
+                <div key={l} className="sim-bar"><span>{l}</span><div><motion.i animate={{ width: Math.max(w, v ? 3 : 0) + '%' }} transition={{ type: 'spring', stiffness: 120, damping: 20 }} /></div><b>{compact(v)}</b></div>
+              ))}
+            </div>
+            <p className="sim-note">{d.disclaimer}</p>
+            <a className="btn btn-gold" href={`https://wa.me/${String(c.contact.whatsapp).replace(/\D/g, '')}?text=${msg}`} target="_blank" rel="noreferrer">Plan this for my brand <span>→</span></a>
+          </Reveal>
+        </div>
       </div>
     </section>
   );
@@ -841,7 +903,7 @@ function TopCreators({ c }) {
         <div className="cw-grid">
           {list.map((x, i) => (
             <motion.div key={x.handle} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.35 }}>
-              <a className="cw-card" href={'https://instagram.com/' + x.handle} target="_blank" rel="noreferrer" aria-label={x.name + ' on Instagram'}>
+              <a className="cw-card" href={'https://instagram.com/' + x.handle} target="_blank" rel="noreferrer">
                 <Tilt className="cw-in" max={10}>
                   <div className="cw-av"><Avatar {...x} bg={bgs[i % 5]} /><span className="cw-ig"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /></svg></span></div>
                   <b>{x.name}</b>
@@ -957,11 +1019,18 @@ function Proof({ c }) {
 
 /* ───────── clients: logo wall ───────── */
 const WM = ['wm-a', 'wm-b', 'wm-c', 'wm-d', 'wm-e', 'wm-f'];
-const Logo = ({ l, i }) => (
-  <div className={'logo-tile ' + WM[i % WM.length]} title={l.name}>
-    {l.image ? <img src={l.image} alt={l.name} loading="lazy" /> : <span>{l.name}</span>}
-  </div>
-);
+const slug = (n) => String(n).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const EXTS = ['svg', 'png', 'webp', 'jpg'];
+const Logo = ({ l, i }) => {
+  // an uploaded image wins; otherwise try /logos/<brand>.svg|png|webp|jpg; otherwise show the styled name
+  const [k, setK] = useState(0);
+  const src = l.image || (k < EXTS.length ? `/logos/${slug(l.name)}.${EXTS[k]}` : '');
+  return (
+    <div className={'logo-tile ' + WM[i % WM.length]} title={l.name}>
+      {src ? <img src={src} alt={l.name} loading="lazy" onError={() => (l.image ? setK(EXTS.length) : setK((x) => x + 1))} /> : <span>{l.name}</span>}
+    </div>
+  );
+};
 function Clients({ c }) {
   const d = c.clients;
   const logos = d.logos || [];
@@ -1051,6 +1120,7 @@ export default function Site() {
         <Marquee c={c} />
         <Stats c={c} />
         <WhatIs c={c} />
+        <Simulator c={c} />
         <Connect c={c} />
         <Creators c={c} />
         <NearView className="map-wrap" margin="400px"><IndiaMap c={c} /></NearView>
