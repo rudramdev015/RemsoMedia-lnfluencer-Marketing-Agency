@@ -8,3 +8,4 @@ server/data/leads.json
 server/uploads/*
 !server/uploads/.gitkeep
 server/data/content.json
+.vercel
