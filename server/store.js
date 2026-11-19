@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
+import { put, head } from '@vercel/blob';
 
 /* Tiny key/value store for site content and enquiries.
    - On a normal server (or locally): JSON files in DATA_DIR.
@@ -8,6 +10,8 @@ import path from 'path';
 const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 export const usingRedis = Boolean(REDIS_URL && REDIS_TOKEN);
+const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
+export const usingBlob = Boolean(BLOB_TOKEN) && !usingRedis;
 
 async function redis(command) {
   const r = await fetch(REDIS_URL, { method: 'POST', headers: { Authorization: `Bearer ${REDIS_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify(command) });
@@ -27,6 +31,23 @@ export function createStore(dataDir) {
         try { return JSON.parse(v); } catch { return fallback; }
       },
       async set(k, value) { await redis(['SET', key(k), JSON.stringify(value)]); }
+    };
+  }
+  if (usingBlob) {
+    // Vercel Blob. Pathnames carry a secret-derived suffix so the (public) URLs cannot be guessed.
+    const name = (k) => `remso/${k}-${crypto.createHmac('sha256', BLOB_TOKEN).update(k).digest('hex').slice(0, 32)}.json`;
+    return {
+      kind: 'blob',
+      async get(k, fallback) {
+        try {
+          const meta = await head(name(k), { token: BLOB_TOKEN });
+          const r = await fetch(`${meta.url}?t=${Date.now()}`, { cache: 'no-store' });
+          return r.ok ? await r.json() : fallback;
+        } catch { return fallback; }
+      },
+      async set(k, value) {
+        await put(name(k), JSON.stringify(value), { access: 'public', contentType: 'application/json', addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60, token: BLOB_TOKEN });
+      }
     };
   }
   const file = (k) => path.join(dataDir, `${k}.json`);

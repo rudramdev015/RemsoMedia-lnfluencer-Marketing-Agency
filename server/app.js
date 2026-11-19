@@ -81,13 +81,32 @@ app.get('/api/health', (_req, res) => res.json({ ok: true, storage: store.kind, 
 
 app.get('/api/content', wrap(async (_req, res) => res.json(fill(defaultContent, await store.get('content', defaultContent)))));
 
-app.post('/api/login', limit(10, 15 * 60 * 1000), (req, res) => {
+// Password: a password changed from the admin panel is stored (scrypt-hashed) in the store and wins over the env var.
+const hashPw = (pw, salt) => crypto.scryptSync(String(pw), salt, 32).toString('hex');
+async function passwordOk(given) {
+  const rec = await store.get('admin', null);
+  if (rec?.salt && rec?.hash) {
+    const a = Buffer.from(hashPw(given, rec.salt)), b = Buffer.from(rec.hash);
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+  }
+  const g = Buffer.from(String(given)), r = Buffer.from(ADMIN_PASSWORD);
+  return g.length === r.length && crypto.timingSafeEqual(g, r);
+}
+
+app.post('/api/login', limit(10, 15 * 60 * 1000), wrap(async (req, res) => {
   if (!ADMIN_PASSWORD) return res.status(503).json({ error: 'Admin is disabled. Set the ADMIN_PASSWORD environment variable on the server.' });
-  const given = Buffer.from(String(req.body?.password || ''));
-  const real = Buffer.from(ADMIN_PASSWORD);
-  const ok = given.length === real.length && crypto.timingSafeEqual(given, real);
-  ok ? res.json({ token: makeToken() }) : res.status(401).json({ error: 'Wrong password' });
-});
+  (await passwordOk(req.body?.password || '')) ? res.json({ token: makeToken() }) : res.status(401).json({ error: 'Wrong password' });
+}));
+
+app.post('/api/password', auth, limit(10, 15 * 60 * 1000), wrap(async (req, res) => {
+  const { current = '', next = '' } = req.body || {};
+  if (!(await passwordOk(current))) return res.status(403).json({ error: 'Current password is wrong' });
+  if (String(next).length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters' });
+  if (store.kind === 'file' && ON_VERCEL) return res.status(503).json({ error: 'Storage is not connected, so the password cannot be saved' });
+  const salt = crypto.randomBytes(16).toString('hex');
+  await store.set('admin', { salt, hash: hashPw(next, salt) });
+  res.json({ ok: true });
+}));
 
 app.put('/api/content', auth, wrap(async (req, res) => {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) return res.status(400).json({ error: 'Invalid content' });

@@ -64,3 +64,15 @@ test('admin can edit content and the change is served', async () => {
   assert.equal(put.status, 200);
   assert.equal((await (await fetch(BASE + '/api/content')).json()).hero.eyebrow, 'EDITED-BY-TEST');
 });
+
+test('admin can change the password and the new one works', async () => {
+  const t = await login();
+  const bad = await fetch(BASE + '/api/password', { ...post({ current: 'wrong', next: 'newpass-1234' }), headers: { 'Content-Type': 'application/json', ...auth(t) } });
+  assert.equal(bad.status, 403);
+  const short = await fetch(BASE + '/api/password', { ...post({ current: PASS, next: 'abc' }), headers: { 'Content-Type': 'application/json', ...auth(t) } });
+  assert.equal(short.status, 400);
+  const ok = await fetch(BASE + '/api/password', { ...post({ current: PASS, next: 'newpass-1234' }), headers: { 'Content-Type': 'application/json', ...auth(t) } });
+  assert.equal(ok.status, 200);
+  assert.equal((await fetch(BASE + '/api/login', post({ password: PASS }))).status, 401);
+  assert.equal((await fetch(BASE + '/api/login', post({ password: 'newpass-1234' }))).status, 200);
+});

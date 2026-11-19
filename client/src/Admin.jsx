@@ -154,6 +154,13 @@ export default function Admin() {
     try { await api('/api/content', { method: 'PUT', body: JSON.stringify(content) }); setDirty(false); setStatus('Saved ✓ — live on the website'); }
     catch (e) { if (e.status === 401) logout(); setStatus('Error: ' + e.message); }
   };
+  const changePw = async () => {
+    const current = prompt('Current admin password:'); if (!current) return;
+    const next = prompt('New password (at least 8 characters):'); if (!next) return;
+    if (next !== prompt('Type the new password again:')) { setStatus('Passwords did not match'); return; }
+    try { await api('/api/password', { method: 'POST', body: JSON.stringify({ current, next }) }); setStatus('Password changed ✓ — use it next time you log in'); }
+    catch (e) { setStatus('Error: ' + e.message); }
+  };
   const reset = async () => {
     if (!confirm('Reset ALL website content to the original defaults? This cannot be undone.')) return;
     try { setContent(await api('/api/content/reset', { method: 'POST' })); setDirty(false); setStatus('Reset to defaults'); } catch (e) { setStatus('Error: ' + e.message); }
@@ -171,6 +178,7 @@ export default function Admin() {
         </nav>
         <div className="a-foot">
           <a href="/" target="_blank" rel="noreferrer">View website ↗</a>
+          <button onClick={changePw}>Change password</button>
           <button onClick={reset}>Reset to defaults</button>
           <button onClick={logout}>Log out</button>
         </div>
