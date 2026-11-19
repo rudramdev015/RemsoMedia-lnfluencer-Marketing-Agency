@@ -22,3 +22,8 @@ img { content-visibility: auto; }
   .grid-bg, .wh-grid { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .three-hero, .three-net, .three-connect, .three-views { display: none; } }
+
+/* founder photo: crop the empty wall above the head */
+.frame img { inset: auto !important; width: 136%; height: 136%; left: -18%; top: -38%; object-fit: cover; object-position: 50% 50%; }
+.hero-face img { object-position: 50% 35%; }
+.fc-face img { object-position: 50% 30%; }
