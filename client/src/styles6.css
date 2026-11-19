@@ -1,0 +1,24 @@
+/* v10: scroll performance */
+/* big blurred glows -> cheap radial gradients (no blur filter) */
+.aurora { filter: none !important; background: radial-gradient(closest-side, var(--ac, #d9a21b), transparent) !important; }
+.a2 { --ac: #2e9c86; }
+/* backdrop blur is the most expensive effect on scroll: off everywhere, backgrounds made a bit more solid */
+*, *::before, *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.nav.solid { background: rgba(2,31,26,.97) !important; }
+.stat, .chip, .bn-card, .sim-controls, .sim-out, .wh-pills span, .bn-plat span, .hero-face, .pill, .region-info, .point, .map-tip { background-color: rgba(8,60,50,.78); }
+.chip { background: #fff; }
+/* other costly effects */
+.cur-ring { mix-blend-mode: normal !important; border-color: var(--gold2); }
+.india-map, .bn-num b, .wh-float, .hero-logo-m, .wh-core img { filter: none !important; }
+.tilt, .cat, .svc, .region, .split .w > span { will-change: auto !important; }
+/* pause animations for sections that are off screen (set from JS) */
+[data-off], [data-off] *, [data-off] *::before, [data-off] *::after { animation-play-state: paused !important; }
+/* keep scrolling on the compositor */
+html { scroll-padding-top: 70px; }
+body { overscroll-behavior-y: none; }
+img { content-visibility: auto; }
+@media (max-width: 700px) {
+  .spot-row, .wall { mask-image: none !important; -webkit-mask-image: none !important; }
+  .grid-bg, .wh-grid { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .three-hero, .three-net, .three-connect, .three-views { display: none; } }

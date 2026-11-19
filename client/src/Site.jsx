@@ -276,15 +276,12 @@ function Hero({ c }) {
 /* ───────── marquee ───────── */
 function Marquee({ c }) {
   const items = [...c.brandsStrip, ...c.brandsStrip, ...c.brandsStrip];
-  const { scrollY } = useScroll();
-  const v = useSpring(useVelocity(scrollY), { stiffness: 80, damping: 30 });
-  const skew = useTransform(v, [-2500, 2500], [-8, 8]);
   const big = ['Influencer Marketing', 'Creators', 'Reach', 'Sales', 'Conversions', 'Pan-India'];
   return (
     <div className="marquees" aria-label="Brands we work with">
-      <motion.div className="marquee" style={{ skewX: skew }}>
+      <div className="marquee">
         <div className="marquee-track">{items.map((b, i) => <span key={i}>{b}<i>✦</i></span>)}</div>
-      </motion.div>
+      </div>
       <div className="outline-marq" aria-hidden>
         <div className="marquee-track rev">{[...big, ...big, ...big].map((b, i) => <span key={i}>{b}<i>●</i></span>)}</div>
       </div>
@@ -1168,6 +1165,13 @@ export default function Site() {
       .then(setC)
       .catch(() => setErr(true));
   }, []);
+
+  useEffect(() => {
+    if (!c) return;
+    const io = new IntersectionObserver((es) => es.forEach((e) => e.target.toggleAttribute('data-off', !e.isIntersecting)), { rootMargin: '120px' });
+    document.querySelectorAll('section, .marquees, footer').forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [c]);
 
   if (err) return <div className="loader"><p>Unable to load content. Please try again shortly.</p></div>;
   if (!c) return <div className="loader"><div className="spin" /></div>;

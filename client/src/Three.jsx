@@ -13,7 +13,7 @@ function useScene(build) {
     try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' }); }
     catch { return; } // no WebGL → CSS background still shows
     const small = window.innerWidth < 700;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, small ? 1.5 : 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, small ? 1 : 1.5));
     el.appendChild(renderer.domElement);
     renderer.domElement.style.cssText = 'width:100%;height:100%;display:block';
 
@@ -40,10 +40,22 @@ function useScene(build) {
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0 });
     io.observe(el);
 
+    // smoothness: draw 3D less often while the page is scrolling, and lower resolution automatically on slow devices
+    let scrolling = false, st, frameN = 0, ema = 16, lastT = performance.now(), dpr = renderer.getPixelRatio();
+    const onScroll = () => { scrolling = true; clearTimeout(st); st = setTimeout(() => { scrolling = false; }, 140); };
+    window.addEventListener('scroll', onScroll, { passive: true });
     const clock = new THREE.Clock();
     const loop = () => {
       raf = requestAnimationFrame(loop);
-      if (!visible) return;
+      const now = performance.now();
+      if (!visible || document.hidden) { lastT = now; return; }
+      frameN++;
+      if (scrolling && frameN % 3) { lastT = now; return; }
+      const dt = now - lastT; lastT = now;
+      if (!scrolling && dt < 100) {
+        ema = ema * 0.9 + dt * 0.1;
+        if (ema > 34 && dpr > 0.6) { dpr = Math.max(0.6, dpr - 0.15); renderer.setPixelRatio(dpr); resize(); ema = 20; }
+      }
       mouse.sx += (mouse.x - mouse.sx) * 0.05;
       mouse.sy += (mouse.y - mouse.sy) * 0.05;
       api.frame(clock.getElapsedTime(), mouse);
@@ -55,6 +67,8 @@ function useScene(build) {
       cancelAnimationFrame(raf);
       ro.disconnect(); io.disconnect();
       window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('scroll', onScroll);
+      clearTimeout(st);
       scene.traverse((o) => {
         o.geometry?.dispose();
         const m = o.material;
