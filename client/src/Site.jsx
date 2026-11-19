@@ -725,18 +725,41 @@ function WhatIs({ c }) {
   return (
     <section id="what" className="sec what">
       <div className="wrap">
-        <div className="what-top">
-          <div>
-            <SectionHead eyebrow={d.eyebrow} title={d.title} text={d.text} />
+        <div className="what-hero">
+          <div className="wh-grid" aria-hidden />
+          <div className="aurora a1" aria-hidden />
+          {['✨', '🎬', '❤️', '📈', '🛒', '⭐'].map((e, i) => <span key={i} className={'wh-float f' + (i + 1)} aria-hidden>{e}</span>)}
+          <div className="wh-copy">
+            <Reveal><span className="eyebrow">{d.eyebrow}</span></Reveal>
+            <h2 className="wh-title" aria-label={d.title}>
+              <SplitText as="span" text={d.title.split('. ')[0] + '.'} />
+              {d.title.includes('. ') && <SplitText as="span" className="gold" delay={0.25} text={d.title.split('. ').slice(1).join('. ')} />}
+            </h2>
+            <Reveal i={2}><p>{d.text}</p></Reveal>
+            <Reveal i={3} className="wh-pills">
+              {d.flow.map((f, i) => <span key={i}><b>{i + 1}</b>{f}</span>)}
+            </Reveal>
           </div>
-          <Reveal i={1} className="flow">
-            {d.flow.map((f, i) => (
-              <div className="flow-step" key={i}>
-                <motion.span className="flow-dot" initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.2 + i * 0.25, type: 'spring' }}>{['🏷️', '🎤', '👥', '📈'][i % 4]}</motion.span>
-                <b>{f}</b>
-                {i < d.flow.length - 1 && <motion.i className="flow-line" initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }} transition={{ delay: 0.4 + i * 0.25, duration: 0.5 }} />}
+          <Reveal i={1} className="wh-orbit-wrap">
+            <div className="wh-orbit">
+              <div className="wh-ring r1" /><div className="wh-ring r2" />
+              <div className="wh-spin">
+                {d.flow.map((f, i) => (
+                  <div key={i} className="wh-node" style={{ '--a': (i * 360) / d.flow.length + 'deg' }}>
+                    <div className="wh-node-in">
+                      <span className="wh-ico">{['🏷️', '🎤', '👥', '📈'][i % 4]}</span>
+                      <b>{f}</b>
+                      <i>{i + 1}</i>
+                    </div>
+                  </div>
+                ))}
+                <span className="wh-signal" />
               </div>
-            ))}
+              <div className="wh-core">
+                <img src={c.brand.logo} alt="" />
+                <span>TRUST</span>
+              </div>
+            </div>
           </Reveal>
         </div>
 
