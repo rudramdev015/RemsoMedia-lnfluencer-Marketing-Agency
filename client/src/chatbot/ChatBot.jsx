@@ -68,7 +68,8 @@ export default function ChatBot({ contact, logo }) {
         if (!r.ok) throw new Error();
         return say(`Thank you, **${L.data.name}**! 🎉 Your request is with the team and we’ll contact you shortly.\n\nIn a hurry? [Chat on WhatsApp](https://wa.me/${String(contact.whatsapp).replace(/\D/g, '')}) or call **${contact.phone}**.`, ['Pricing', 'Brands you worked with']);
       } catch {
-        return say(`Hmm, I couldn’t save that. Please call or WhatsApp us directly on **${contact.phone}** — sorry about that!`);
+        const wa = `https://wa.me/${String(contact.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent(`Hi Remso Media! I'm ${L.data.name}. ${L.data.message} Contact: ${L.data.phone}`)}`;
+        return say(`Thanks, **${L.data.name}**! Tap here to send your details to the team on WhatsApp: [Send on WhatsApp](${wa}) — or call **${contact.phone}**.`);
       }
     }
   };

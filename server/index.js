@@ -9,8 +9,8 @@ import { fileURLToPath } from 'url';
 import defaultContent from './defaultContent.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, 'data');
-const UPLOAD_DIR = path.join(__dirname, 'uploads');
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const UPLOAD_DIR = process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'uploads') : path.join(__dirname, 'uploads');
 const CONTENT_FILE = path.join(DATA_DIR, 'content.json');
 const LEADS_FILE = path.join(DATA_DIR, 'leads.json');
 const CLIENT_DIST = path.join(__dirname, '..', 'client', 'dist');

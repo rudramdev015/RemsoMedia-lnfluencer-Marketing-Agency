@@ -5,6 +5,8 @@ const NetworkSphere = lazy(() => import('./Three.jsx').then((m) => ({ default: m
 const ConnectScene = lazy(() => import('./Three.jsx').then((m) => ({ default: m.ConnectScene })));
 const IndiaMap = lazy(() => import('./IndiaMap.jsx'));
 import Avatar from './Avatar.jsx';
+import PhoneMock from './PhoneMock.jsx';
+import { sortCases, filterCreators } from './utils.js';
 const ChatBot = lazy(() => import('./chatbot/ChatBot.jsx'));
 
 /* ───────── helpers ───────── */
@@ -103,17 +105,33 @@ const Cursor = () => {
   );
 };
 
-/* intro loader */
-const Preloader = ({ logo, done }) => (
-  <AnimatePresence>
-    {!done && (
-      <motion.div className="preloader" initial={{ clipPath: 'circle(150% at 50% 50%)' }} exit={{ clipPath: 'circle(0% at 50% 50%)', transition: { duration: 0.9, ease: [0.76, 0, 0.24, 1] } }}>
-        <motion.img src={logo} alt="" initial={{ scale: 0.4, rotate: -180, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} />
-        <div className="pbar"><motion.i initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: 1.0, ease: 'easeInOut' }} /></div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
+/* intro loader: logo, brand name, live percentage, curtain exit */
+const Preloader = ({ logo, done, name = 'Remso Media' }) => {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (done) return;
+    const c = animate(0, 100, { duration: 1.05, ease: [0.65, 0, 0.35, 1], onUpdate: (v) => setN(Math.round(v)) });
+    return () => c.stop();
+  }, [done]);
+  return (
+    <AnimatePresence>
+      {!done && (
+        <motion.div className="preloader" role="status" aria-label="Loading" exit={{ clipPath: 'inset(0 0 100% 0)', transition: { duration: 0.85, ease: [0.76, 0, 0.24, 1] } }} initial={{ clipPath: 'inset(0 0 0% 0)' }}>
+          <div className="pl-rings"><i /><i /><i /></div>
+          <motion.img src={logo} alt="" initial={{ scale: 0.3, rotate: -200, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }} />
+          <div className="pl-name" aria-hidden>
+            {name.split('').map((ch, i) => (
+              <motion.span key={i} initial={{ y: '110%' }} animate={{ y: 0 }} transition={{ delay: 0.25 + i * 0.045, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>{ch === ' ' ? '\u00a0' : ch}</motion.span>
+            ))}
+          </div>
+          <motion.small initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>Connecting brands with the right creators</motion.small>
+          <div className="pl-count"><b>{String(n).padStart(2, '0')}</b><span>%</span></div>
+          <div className="pbar"><i style={{ width: n + '%' }} /></div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 const Counter = ({ value, suffix = '' }) => {
   const ref = useRef(null);
@@ -489,10 +507,17 @@ function Contact({ c }) {
     e.preventDefault();
     setState({ s: 'loading', msg: '' });
     try {
-      const r = await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || 'Something went wrong');
-      setState({ s: 'done', msg: '' });
+      let r, j, wa = '';
+      try { r = await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) }); j = await r.json(); } catch { r = null; }
+      if (r && !r.ok && (r.status === 400 || r.status === 429)) throw new Error(j.error || 'Something went wrong');
+      if (!r || !r.ok) {
+        // no backend available (static hosting): hand the enquiry over via WhatsApp instead of losing it
+        if (!f.name.trim() || !(f.email || f.phone)) throw new Error('Please enter your name and an email or phone number.');
+        const text = `Hi Remso Media! I'm ${f.name}${f.brand ? ' from ' + f.brand : ''}.${f.budget ? ' Budget: ' + f.budget + '.' : ''} ${f.message}
+Contact: ${f.phone || f.email}`;
+        wa = `https://wa.me/${String(k.whatsapp).replace(/\D/g, '')}?text=${encodeURIComponent(text)}`;
+      }
+      setState({ s: 'done', msg: '', wa });
       setF({ name: '', brand: '', email: '', phone: '', budget: '', message: '', website: '' });
     } catch (err) {
       setState({ s: 'error', msg: err.message });
@@ -526,7 +551,8 @@ function Contact({ c }) {
                 <motion.div key="ok" className="thanks" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
                   <div className="check">✓</div>
                   <h3>Thank you!</h3>
-                  <p>We have received your details and will contact you shortly.</p>
+                  <p>{state.wa ? 'One last step — tap below to send your details to our team on WhatsApp.' : 'We have received your details and will contact you shortly.'}</p>
+                  {state.wa && <a className="btn btn-gold" href={state.wa} target="_blank" rel="noreferrer">💬 Send on WhatsApp</a>}
                   <button type="button" className="btn btn-ghost" onClick={() => setState({ s: 'idle', msg: '' })}>Send another</button>
                 </motion.div>
               ) : (
@@ -720,48 +746,74 @@ function WhatIs({ c }) {
   );
 }
 
-/* ───────── case studies ───────── */
+/* ───────── case studies (filter + sort) ───────── */
+const CS_FILTERS = [['all', 'All'], ['awareness', 'Awareness'], ['conversion', 'Sales & conversion'], ['admissions', 'Admissions'], ['always-on', 'Always-on']];
+const CS_AV = [
+  { skin: '#d9a07a', hair: '#15110f', top: '#2b6cb0', style: 'short', extras: 'glasses' }, { skin: '#e8b48c', hair: '#1b1210', top: '#d9467a', style: 'long', extras: 'bindi' },
+  { skin: '#c98d64', hair: '#0f0c0b', top: '#e08a1e', style: 'cap', extras: 'beard' }, { skin: '#ecc19c', hair: '#2a1a14', top: '#2e9c86', style: 'bun', extras: '' },
+  { skin: '#d4996f', hair: '#17110e', top: '#1f3b4d', style: 'short', extras: 'beard' }, { skin: '#e0ab83', hair: '#33201a', top: '#8a2be2', style: 'curly', extras: '' }
+];
 function CaseStudies({ c }) {
   const d = c.caseStudies;
-  const [i, setI] = useState(0);
-  const x = d.items[i];
+  const [filter, setFilter] = useState('all');
+  const [sort, setSort] = useState('featured');
+  const [brand, setBrand] = useState(d.items[0].brand);
+  const list = sortCases(d.items.filter((x) => filter === 'all' || x.type === filter), sort);
+  const x = list.find((y) => y.brand === brand) || list[0];
+  const idx = d.items.findIndex((y) => y.brand === x?.brand);
   return (
     <section id="cases" className="sec cases">
       <div className="wrap">
         <SectionHead eyebrow={d.eyebrow} title={d.title} text={d.text} />
-        <Reveal className="cs-tabs" role="tablist">
-          {d.items.map((it, n) => (
-            <button key={n} role="tab" aria-selected={i === n} className={i === n ? 'on' : ''} onClick={() => setI(n)}>
-              {i === n && <motion.i layoutId="cstab" />}<span>{it.brand}</span>
-            </button>
-          ))}
+        <Reveal className="cs-controls">
+          <div className="cs-filters" role="group" aria-label="Filter case studies">
+            {CS_FILTERS.map(([k, l]) => <button key={k} className={filter === k ? 'on' : ''} aria-pressed={filter === k} onClick={() => { setFilter(k); }}>{l}<small>{k === 'all' ? d.items.length : d.items.filter((y) => y.type === k).length}</small></button>)}
+          </div>
+          <label className="cs-sort">Sort
+            <select value={sort} onChange={(e) => setSort(e.target.value)}>
+              <option value="featured">Featured</option><option value="impact">Biggest numbers</option><option value="az">A – Z</option>
+            </select>
+          </label>
         </Reveal>
-        <AnimatePresence mode="wait">
-          <motion.div key={i} className="cs" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.4 }}>
-            <div className="cs-hero">
-              <span className="tag">{x.industry}</span>
-              <div className="cs-metric">{x.metric ? <><Counter value={x.metric} suffix={x.suffix} /></> : <span className="word">{x.brand}</span>}</div>
-              <em>{x.metricLabel}</em>
-              <h3>{x.brand}</h3>
-              <div className="cs-tags">{x.tags.map((t) => <span key={t}>{t}</span>)}</div>
-            </div>
-            <div className="cs-body">
-              {[['🎯', 'Goal', x.goal], ['⚡', 'Challenge', x.challenge], ['🧭', 'Our approach', x.approach]].map(([ic, t, tx], n) => (
-                <motion.div key={t} className="cs-block" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + n * 0.1 }}>
-                  <span>{ic}</span><div><small>{t}</small><p>{tx}</p></div>
-                </motion.div>
+        {x ? (
+          <>
+            <div className="cs-tabs" role="tablist">
+              {list.map((it) => (
+                <button key={it.brand} role="tab" aria-selected={x.brand === it.brand} className={x.brand === it.brand ? 'on' : ''} onClick={() => setBrand(it.brand)}>
+                  {x.brand === it.brand && <motion.i layoutId="cstab" />}<span>{it.brand}</span>
+                </button>
               ))}
-              <div className="cs-results">
-                {x.results.map((r, n) => (
-                  <motion.div key={n} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 + n * 0.1, type: 'spring' }}>
-                    <b>{r.v}</b><span>{r.l}</span>
-                  </motion.div>
-                ))}
-              </div>
-              <a className="btn btn-gold" href="#contact" onClick={go('contact')}>Get results like this <span>→</span></a>
             </div>
-          </motion.div>
-        </AnimatePresence>
+            <AnimatePresence mode="wait">
+              <motion.div key={x.brand} className="cs" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.4 }}>
+                <div className="cs-hero">
+                  <span className="tag">{x.industry}</span>
+                  <div className="cs-metric">{x.metric ? <Counter value={x.metric} suffix={x.suffix} /> : <span className="word">{x.brand}</span>}</div>
+                  <em>{x.metricLabel}</em>
+                  <h3>{x.brand}</h3>
+                  <div className="cs-tags">{x.tags.map((t) => <span key={t}>{t}</span>)}</div>
+                  <div className="cs-phone"><PhoneMock {...CS_AV[(idx < 0 ? 0 : idx) % CS_AV.length]} stat={x.results[0]?.v} label={x.brand} /></div>
+                </div>
+                <div className="cs-body">
+                  {[['🎯', 'Objective', x.goal], ['⚡', 'Challenge', x.challenge], ['🧭', 'Our approach', x.approach], ['🗓️', 'Period', x.period]].map(([ic, t, tx], n) => (
+                    <motion.div key={t} className="cs-block" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + n * 0.08 }}>
+                      <span>{ic}</span><div><small>{t}</small><p>{tx}</p></div>
+                    </motion.div>
+                  ))}
+                  <div className="cs-results">
+                    {x.results.map((r, n) => (
+                      <motion.div key={n} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 + n * 0.1, type: 'spring' }}>
+                        <b>{r.v}</b><span>{r.l}</span>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <p className="cs-note">{[x.note, d.disclaimer].filter(Boolean).join(' · ')}</p>
+                  <a className="btn btn-gold" href="#contact" onClick={go('contact')}>Get results like this <span>→</span></a>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </>
+        ) : <p className="cs-empty">No case studies in this category yet.</p>}
       </div>
     </section>
   );
@@ -770,15 +822,25 @@ function CaseStudies({ c }) {
 /* ───────── top creators wall ───────── */
 function TopCreators({ c }) {
   const d = c.topCreators;
+  const [q, setQ] = useState('');
+  const [sort, setSort] = useState('default');
   if (!d) return null;
   const bgs = [['#0b5545', '#04372f'], ['#d9a21b', '#8a5f08'], ['#2e9c86', '#0b5545'], ['#8a2be2', '#3b1370'], ['#e0527a', '#7a1f3a']];
+  const list = filterCreators(d.items, q, sort);
   return (
     <section id="creators-wall" className="sec cwall">
       <div className="wrap">
         <SectionHead eyebrow={d.eyebrow} title={d.title} text={d.text} />
+        <div className="cw-tools">
+          <label className="cw-search"><span aria-hidden>🔍</span><input type="search" placeholder="Search creators…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search creators" /></label>
+          <label className="cs-sort">Sort
+            <select value={sort} onChange={(e) => setSort(e.target.value)}><option value="default">Featured</option><option value="az">A – Z</option><option value="za">Z – A</option></select>
+          </label>
+          <span className="cw-count">{list.length} of {d.items.length}</span>
+        </div>
         <div className="cw-grid">
-          {d.items.map((x, i) => (
-            <Reveal key={x.handle} i={i % 4}>
+          {list.map((x, i) => (
+            <motion.div key={x.handle} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.35 }}>
               <a className="cw-card" href={'https://instagram.com/' + x.handle} target="_blank" rel="noreferrer" aria-label={x.name + ' on Instagram'}>
                 <Tilt className="cw-in" max={10}>
                   <div className="cw-av"><Avatar {...x} bg={bgs[i % 5]} /><span className="cw-ig"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /></svg></span></div>
@@ -788,9 +850,10 @@ function TopCreators({ c }) {
                   <span className="cw-btn">View profile ↗</span>
                 </Tilt>
               </a>
-            </Reveal>
+            </motion.div>
           ))}
         </div>
+        {!list.length && <p className="cs-empty">No creators match “{q}”.</p>}
         <p className="spot-note">{d.note}</p>
       </div>
     </section>
@@ -964,10 +1027,14 @@ export default function Site() {
   const { scrollYProgress } = useScroll();
   const bar = useSpring(scrollYProgress, { stiffness: 120, damping: 24 });
   const [ready, setReady] = useState(() => { try { return /nopre/.test(window.location.search) || !!sessionStorage.getItem('remso_seen'); } catch { return true; } });
-  useEffect(() => { if (ready) return; const t = setTimeout(() => { setReady(true); try { sessionStorage.setItem('remso_seen', '1'); } catch { /* ignore */ } }, 1200); return () => clearTimeout(t); }, [ready]);
+  useEffect(() => { if (ready || !c) return; const t = setTimeout(() => { setReady(true); try { sessionStorage.setItem('remso_seen', '1'); } catch { /* ignore */ } }, 1300); return () => clearTimeout(t); }, [ready, c]);
 
   useEffect(() => {
-    fetch('/api/content').then((r) => r.json()).then(setC).catch(() => setErr(true));
+    fetch('/api/content')
+      .then((r) => { if (!r.ok) throw new Error('no api'); return r.json(); })
+      .catch(() => import('../../server/defaultContent.js').then((m) => m.default)) // static hosting (e.g. Vercel): use bundled content
+      .then(setC)
+      .catch(() => setErr(true));
   }, []);
 
   if (err) return <div className="loader"><p>Unable to load content. Please try again shortly.</p></div>;
@@ -975,7 +1042,7 @@ export default function Site() {
 
   return (
     <>
-      <Preloader logo={c.brand.logo} done={ready} />
+      <Preloader logo={c.brand.logo} name={c.brand.name} done={ready} />
       <Cursor />
       <motion.div className="progress" style={{ scaleX: bar }} />
       <Nav c={c} />
