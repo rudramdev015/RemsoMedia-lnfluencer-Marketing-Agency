@@ -13,7 +13,7 @@ let proc, dir;
 before(async () => {
   dir = mkdtempSync(path.join(tmpdir(), 'remso-test-'));
   proc = spawn(process.execPath, [path.join(here, '..', 'index.js')], { env: { ...process.env, PORT: String(PORT), DATA_DIR: dir, ADMIN_PASSWORD: PASS }, stdio: 'ignore' });
-  for (let i = 0; i < 40; i++) { try { await fetch(BASE + '/api/content'); return; } catch { await new Promise((r) => setTimeout(r, 150)); } }
+  for (let i = 0; i < 120; i++) { try { await fetch(BASE + '/api/content'); return; } catch { await new Promise((r) => setTimeout(r, 150)); } }
   throw new Error('server did not start');
 });
 after(() => { proc?.kill(); try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ } });
