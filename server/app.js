@@ -8,7 +8,7 @@ import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import defaultContent from './defaultContent.js';
-import { createStore, usingRedis } from './store.js';
+import { createStore, usingRedis, usingBlob, putFile } from './store.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ON_VERCEL = Boolean(process.env.VERCEL);
@@ -20,7 +20,7 @@ const CLIENT_DIST = path.join(__dirname, '..', 'client', 'dist');
 // In production there is NO default password: admin stays disabled until ADMIN_PASSWORD is set.
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (PROD ? '' : 'remso@2026');
 const SECRET = process.env.SESSION_SECRET || (ADMIN_PASSWORD ? crypto.createHash('sha256').update('remso:' + ADMIN_PASSWORD).digest('hex') : crypto.randomBytes(32).toString('hex'));
-const CAN_UPLOAD = !ON_VERCEL || Boolean(process.env.DATA_DIR);
+const CAN_UPLOAD = !ON_VERCEL || Boolean(process.env.DATA_DIR) || usingBlob;
 
 const store = createStore(DATA_DIR);
 
@@ -67,13 +67,17 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
 let upload = null;
-if (CAN_UPLOAD) {
+const IMG_OK = /\.(jpe?g|png|webp|gif|svg)$/i;
+if (usingBlob) {
+  // Images go to Vercel Blob (permanent, served from a CDN). Vercel requests are capped near 4.5 MB.
+  upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024 }, fileFilter: (_req, file, cb) => cb(null, IMG_OK.test(file.originalname)) });
+} else if (CAN_UPLOAD) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
   app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
   upload = multer({
     storage: multer.diskStorage({ destination: UPLOAD_DIR, filename: (_req, file, cb) => cb(null, Date.now() + '-' + crypto.randomBytes(3).toString('hex') + path.extname(file.originalname).toLowerCase()) }),
     limits: { fileSize: 8 * 1024 * 1024 },
-    fileFilter: (_req, file, cb) => cb(null, /\.(jpe?g|png|webp|gif|svg)$/i.test(file.originalname))
+    fileFilter: (_req, file, cb) => cb(null, IMG_OK.test(file.originalname))
   });
 }
 
@@ -121,7 +125,10 @@ app.post('/api/upload', auth, (req, res, next) => {
   upload.single('file')(req, res, (err) => {
     if (err) return next(err);
     if (!req.file) return res.status(400).json({ error: 'Please upload an image (jpg, png, webp, gif, svg).' });
-    res.json({ url: '/uploads/' + req.file.filename });
+    if (usingBlob) {
+      putFile(`uploads/${Date.now()}-${crypto.randomBytes(3).toString('hex')}${path.extname(req.file.originalname).toLowerCase()}`, req.file.buffer, req.file.mimetype)
+        .then((url) => res.json({ url })).catch(next);
+    } else res.json({ url: '/uploads/' + req.file.filename });
   });
 });
 

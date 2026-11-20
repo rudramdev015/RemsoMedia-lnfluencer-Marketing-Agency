@@ -1,0 +1,33 @@
+/* ---- Tablet polish (iPad / Android tablets, portrait + landscape) ---- */
+@media (min-width: 621px) and (max-width: 1180px) {
+  .wrap, .narrow { width: min(100% - 56px, 1040px); }
+  /* floating stat chips must never be cut off by the screen edge */
+  .c1 { right: 12px !important; top: 5% !important; }
+  .c2 { left: 12px !important; bottom: 10% !important; }
+  .c3 { right: 16px !important; bottom: 2% !important; }
+  .chip { padding: 10px 16px; }
+  .chip strong { font-size: 1.15rem; }
+  .btn, .tabs button, .cs-filters button, .nav nav a { min-height: 44px; }
+  .hero h1 { font-size: clamp(2.4rem, 6.4vw, 4rem); }
+  .hero p { font-size: 1.1rem; }
+  .stats-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .work-grid, .svc-grid { grid-template-columns: repeat(2, 1fr); gap: 22px; }
+  .team-grid { grid-template-columns: repeat(3, 1fr); }
+}
+/* portrait tablets: hero stacks, 3D scene gets a comfortable stage */
+@media (min-width: 621px) and (max-width: 980px) {
+  .hero-in { justify-items: stretch; }
+  .hero-art { min-height: 520px; max-width: 640px; margin: 8px auto 0; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .team-grid { grid-template-columns: repeat(2, 1fr); }
+}
+/* landscape tablets: keep the two-column hero, scale the stage to the screen height */
+@media (min-width: 981px) and (max-width: 1180px) {
+  .hero-art { min-height: min(560px, 70vh); }
+  .nav nav { gap: 18px; font-size: .95rem; }
+}
+/* touch devices: no hover-only tricks, comfortable scroll */
+@media (hover: none) and (pointer: coarse) {
+  .tilt, [data-tilt] { transform: none !important; }
+  .chat-launch, .wa-float { transform: translateZ(0); }
+}

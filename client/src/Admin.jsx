@@ -18,6 +18,19 @@ const pretty = (k) => String(k).replace(/([A-Z])/g, ' $1').replace(/[_-]/g, ' ')
 const blank = (v) => (Array.isArray(v) ? [] : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, blank(x)])) : typeof v === 'number' ? 0 : '');
 const isImg = (k) => /image|logo|photo|avatar/i.test(k);
 
+// Shrink big photos in the browser (max 1800px, JPEG) so uploads stay small and fast. SVG/GIF are sent as-is.
+async function shrink(file) {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 400 * 1024) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const out = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.86));
+    return out && out.size < file.size ? out : file;
+  } catch { return file; }
+}
+
 function ImageField({ value, onChange }) {
   const [busy, setBusy] = useState(false);
   const pick = async (e) => {
@@ -26,7 +39,7 @@ function ImageField({ value, onChange }) {
     setBusy(true);
     try {
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', await shrink(file), file.name.replace(/\.(png|webp|heic)$/i, '.jpg'));
       onChange((await api('/api/upload', { method: 'POST', body: fd })).url);
     } catch (err) { alert(err.message); }
     setBusy(false);
@@ -187,11 +200,11 @@ export default function Admin() {
         <div className="a-bar">
           <h2>{section === '__leads' ? 'Enquiries' : pretty(section)}</h2>
           {section !== '__leads' && (
-            <div><span className="a-status">{dirty ? 'Unsaved changes' : status}</span><button className="btn btn-gold sm" onClick={save}>Save changes</button></div>
+            <div><span className={'a-status' + (/^Error/.test(status) ? ' bad' : '')}>{status || (dirty ? 'Unsaved changes' : '')}</span><button className="btn btn-gold sm" onClick={save} disabled={status === 'Saving…'}>{status === 'Saving…' ? 'Saving…' : 'Save changes'}</button></div>
           )}
         </div>
         {section === '__leads' ? <Leads /> : (
-          <Field k={section} value={content[section]} onChange={(v) => { setContent({ ...content, [section]: v }); setDirty(true); }} />
+          <Field k={section} value={content[section]} onChange={(v) => { setContent({ ...content, [section]: v }); setDirty(true); setStatus(''); }} />
         )}
       </section>
     </div>

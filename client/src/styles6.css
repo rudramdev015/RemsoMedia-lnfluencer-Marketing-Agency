@@ -27,3 +27,4 @@ img { content-visibility: auto; }
 .frame img { inset: auto !important; width: 136%; height: 136%; left: -18%; top: -38%; object-fit: cover; object-position: 50% 50%; }
 .hero-face img { object-position: 50% 35%; }
 .fc-face img { object-position: 50% 30%; }
+.a-status.bad{color:#ff6b6b;font-weight:700}.a-bar .btn[disabled]{opacity:.6;pointer-events:none}

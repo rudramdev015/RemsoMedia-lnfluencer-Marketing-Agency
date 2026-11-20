@@ -64,3 +64,9 @@ export function createStore(dataDir) {
     }
   };
 }
+
+/* Upload a binary file (an image) to Vercel Blob and return its public URL. */
+export async function putFile(pathname, buffer, contentType) {
+  const r = await put(pathname, buffer, { access: 'public', contentType, addRandomSuffix: false, token: BLOB_TOKEN });
+  return r.url;
+}

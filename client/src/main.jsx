@@ -6,5 +6,6 @@ import './styles3.css';
 import './styles4.css';
 import './styles5.css';
 import './styles6.css';
+import './styles7.css';
 
 createRoot(document.getElementById('root')).render(<App />);
